@@ -3,10 +3,11 @@
 import os
 import uuid
 
-from fastapi import APIRouter, Request, HTTPException, UploadFile, File
+from fastapi import APIRouter, Request, HTTPException, UploadFile, File, BackgroundTasks
 from supabase import create_client, Client
 
 from middleware.auth import get_user_id
+from services import ingestion_service
 
 router = APIRouter(prefix="/api/documents", tags=["documents"])
 
@@ -53,7 +54,11 @@ async def list_documents(request: Request):
 
 
 @router.post("/upload")
-async def upload_document(request: Request, file: UploadFile = File(...)):
+async def upload_document(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...)
+):
     """Upload a document to Supabase Storage and track it."""
     user_id = get_user_id(request)
 
@@ -103,6 +108,15 @@ async def upload_document(request: Request, file: UploadFile = File(...)):
             }
         )
         .execute()
+    )
+
+    # Kick off background processing
+    background_tasks.add_task(
+        ingestion_service.process_document,
+        document_id=doc_id,
+        user_id=user_id,
+        storage_path=storage_path,
+        file_type=file.content_type
     )
 
     return result.data[0] if result.data else {}

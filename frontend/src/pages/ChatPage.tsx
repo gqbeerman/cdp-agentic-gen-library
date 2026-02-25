@@ -182,7 +182,7 @@ export default function ChatPage() {
     }
 
     return (
-        <div className="flex h-screen bg-background">
+        <div className="flex h-screen overflow-hidden bg-background">
             {/* Sidebar */}
             <ThreadSidebar
                 threads={threads}
@@ -193,7 +193,7 @@ export default function ChatPage() {
             />
 
             {/* Main chat area */}
-            <div className="flex flex-1 flex-col">
+            <div className="flex flex-1 flex-col overflow-hidden">
                 {/* Header */}
                 <header className="flex items-center justify-between border-b px-6 py-3">
                     <h1 className="text-lg font-semibold">📚 Agentic RAG Library</h1>

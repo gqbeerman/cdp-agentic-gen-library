@@ -37,7 +37,7 @@ export default function MessageList({
     }
 
     return (
-        <ScrollArea className="flex-1">
+        <ScrollArea className="flex-1 min-h-0 w-full overflow-hidden">
             <div className="mx-auto max-w-3xl space-y-6 p-4">
                 {messages.map((msg) => (
                     <div

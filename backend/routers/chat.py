@@ -66,7 +66,7 @@ async def chat(request: Request, body: ChatRequest):
     async def event_generator():
         full_response = ""
         try:
-            async for chunk in chat_stream(messages, thread_id=body.thread_id):
+            async for chunk in chat_stream(messages, user_id=user_id, thread_id=body.thread_id):
                 full_response += chunk
                 yield {
                     "data": json.dumps({"content": chunk}),

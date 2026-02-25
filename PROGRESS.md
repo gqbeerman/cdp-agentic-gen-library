@@ -31,6 +31,6 @@ Track your progress through the masterclass. Update this file as you complete mo
 - [x] Refactored routers (threads no longer call OpenAI, messages stored in Supabase)
 - [x] LangSmith tracing with model/provider metadata
 - [x] Ingestion UI + file storage
-- [ ] Document chunking + embeddings + pgvector
-- [ ] Retrieval tool + tool calling
+- [x] Document chunking + embeddings + pgvector
+- [x] Retrieval tool + tool calling
 - [ ] Realtime ingestion status

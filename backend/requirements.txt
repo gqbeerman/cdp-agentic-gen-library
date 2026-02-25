@@ -8,3 +8,8 @@ pydantic
 sse-starlette
 PyJWT
 python-multipart
+langchain-text-splitters
+langchain-openai
+pypdf
+python-docx
+beautifulsoup4

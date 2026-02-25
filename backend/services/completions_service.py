@@ -49,35 +49,98 @@ SYSTEM_PROMPT = (
 
 # ── Streaming completions ──
 
+import json
+from tools.retrieval import search_knowledge_base, retrieval_tool_schema
+
+# ...
+
 async def chat_stream(
     messages: list[dict],
+    user_id: str,
     thread_id: str | None = None,
 ) -> AsyncGenerator[str, None]:
-    """Stream a chat completion from the configured provider.
-
-    Args:
-        messages: The full messages array including system prompt.
-        thread_id: Optional thread ID for tracing.
-
-    Yields:
-        Content chunks as they arrive from the model.
-    """
+    """Stream a chat completion from the configured provider, handling tools."""
     config = _get_config()
     client = _get_client()
 
-    full_response = ""
+    tools = [retrieval_tool_schema]
 
+    # PASS 1: Generate response, possibly calling tools
     stream = client.chat.completions.create(
         model=config["model"],
         messages=messages,
+        tools=tools,
         stream=True,
     )
 
+    full_response = ""
+    tool_calls = {}
+
     for chunk in stream:
-        if chunk.choices and chunk.choices[0].delta.content:
-            text = chunk.choices[0].delta.content
+        delta = chunk.choices[0].delta if chunk.choices else None
+        if not delta:
+            continue
+
+        # Option A: Normal content chunk
+        if delta.content:
+            text = delta.content
             full_response += text
             yield text
+            
+        # Option B: Tool call chunk
+        elif delta.tool_calls:
+            for tc in delta.tool_calls:
+                idx = tc.index
+                if idx not in tool_calls:
+                    tool_calls[idx] = {
+                        "id": tc.id,
+                        "type": "function",
+                        "function": {"name": tc.function.name, "arguments": ""}
+                    }
+                if tc.function.arguments:
+                    tool_calls[idx]["function"]["arguments"] += tc.function.arguments
+
+    # Check if any tools were actually called
+    if tool_calls:
+        # yield a status message so the UI knows we're searching
+        # In a real app we might use a dedicated event type
+        print(f"Tool calls detected: {len(tool_calls)}")
+        
+        # Format the assistant message containing the tool calls
+        assistant_message = {
+            "role": "assistant",
+            "content": None,
+            "tool_calls": list(tool_calls.values())
+        }
+        messages.append(assistant_message)
+
+        # Execute all tool calls
+        for tc in tool_calls.values():
+            if tc["function"]["name"] == "search_knowledge_base":
+                args = json.loads(tc["function"]["arguments"])
+                print(f"Executing tool search_knowledge_base with args: {args}")
+                result = await search_knowledge_base(args["query"], user_id)
+                
+                # Append tool result to messages
+                messages.append({
+                    "role": "tool",
+                    "tool_call_id": tc["id"],
+                    "content": result
+                })
+
+        # PASS 2: Send the updated messages list back to the LLM
+        second_stream = client.chat.completions.create(
+            model=config["model"],
+            messages=messages,
+            stream=True
+        )
+        
+        for chunk in second_stream:
+            delta = chunk.choices[0].delta if chunk.choices else None
+            if delta and delta.content:
+                text = delta.content
+                full_response += text
+                yield text
 
     # Trace the completed interaction
     if thread_id:
