@@ -1,74 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { FileText, Loader2, Trash2 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 
 import { supabase } from '@/lib/supabase'
 import FileUploadZone from '@/components/FileUploadZone'
-
-interface Document {
-    id: string
-    filename: string
-    file_type: string
-    file_size: number
-    status: 'uploaded' | 'processing' | 'ready' | 'error'
-    error_message?: string
-    chunk_count: number
-    created_at: string
-}
+import { useDocumentStatus } from '@/contexts/DocumentStatusProvider'
 
 export default function IngestionPage() {
-    const [documents, setDocuments] = useState<Document[]>([])
-    const [isLoading, setIsLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
+    const { documents, isLoading, error: statusError, refreshDocuments } = useDocumentStatus()
+    const [localError, setLocalError] = useState<string | null>(null)
 
-    const fetchDocuments = async () => {
-        try {
-            const { data: { session } } = await supabase.auth.getSession()
-            if (!session) throw new Error('Not authenticated')
-
-            const response = await fetch('http://localhost:8000/api/documents', {
-                headers: {
-                    'Authorization': `Bearer ${session.access_token}`,
-                }
-            })
-            if (!response.ok) throw new Error('Failed to fetch documents')
-            const data = await response.json()
-            setDocuments(data)
-        } catch (err: any) {
-            setError(err.message)
-        } finally {
-            setIsLoading(false)
-        }
-    }
-
-    useEffect(() => {
-        fetchDocuments()
-
-        // Subscribe to realtime changes on the documents table
-        const channel = supabase
-            .channel('schema-db-changes')
-            .on(
-                'postgres_changes',
-                { event: '*', schema: 'public', table: 'documents' },
-                (payload) => {
-                    console.log('Realtime update:', payload)
-                    if (payload.eventType === 'INSERT') {
-                        setDocuments((prev) => [payload.new as Document, ...prev])
-                    } else if (payload.eventType === 'UPDATE') {
-                        setDocuments((prev) =>
-                            prev.map((doc) => (doc.id === payload.new.id ? (payload.new as Document) : doc))
-                        )
-                    } else if (payload.eventType === 'DELETE') {
-                        setDocuments((prev) => prev.filter((doc) => doc.id !== payload.old.id))
-                    }
-                }
-            )
-            .subscribe()
-
-        return () => {
-            supabase.removeChannel(channel)
-        }
-    }, [])
+    const error = statusError || localError
 
     const handleDelete = async (id: string) => {
         try {
@@ -118,12 +60,11 @@ export default function IngestionPage() {
                 </div>
 
                 <FileUploadZone
-                    onUploadStart={() => setError(null)}
+                    onUploadStart={() => setLocalError(null)}
                     onUploadSuccess={() => {
-                        // Note: Optimistic UI or let Realtime handle it. 
-                        // We rely on Realtime here to automatically add 'uploaded' row.
+                        refreshDocuments()
                     }}
-                    onUploadError={(err) => setError(err)}
+                    onUploadError={(err) => setLocalError(err)}
                 />
 
                 {error && (

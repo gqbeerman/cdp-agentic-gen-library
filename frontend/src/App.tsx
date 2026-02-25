@@ -1,14 +1,17 @@
 import { useState } from 'react'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
+import { Database, MessageSquare } from 'lucide-react'
 import AuthPage from '@/pages/AuthPage'
 import ChatPage from '@/pages/ChatPage'
 import IngestionPage from '@/pages/IngestionPage'
-import { Database, MessageSquare } from 'lucide-react'
+import { Toaster } from '@/components/ui/sonner'
+import { DocumentStatusProvider, useDocumentStatus } from '@/contexts/DocumentStatusProvider'
 import './App.css'
 
 function AppContent() {
   const { user, loading } = useAuth()
   const [currentView, setCurrentView] = useState<'chat' | 'documents'>('chat')
+  const { isProcessing } = useDocumentStatus()
 
   if (loading) {
     return (
@@ -39,8 +42,8 @@ function AppContent() {
           <button
             onClick={() => setCurrentView('chat')}
             className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${currentView === 'chat'
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
               }`}
           >
             <MessageSquare className="h-4 w-4" />
@@ -49,11 +52,19 @@ function AppContent() {
           <button
             onClick={() => setCurrentView('documents')}
             className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${currentView === 'documents'
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
               }`}
           >
-            <Database className="h-4 w-4" />
+            <div className="relative">
+              <Database className="h-4 w-4" />
+              {isProcessing && (
+                <span className="absolute -right-1 -top-1 flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                </span>
+              )}
+            </div>
             Knowledge Base
           </button>
         </nav>
@@ -64,14 +75,17 @@ function AppContent() {
       <main className="flex-1 overflow-hidden">
         {currentView === 'chat' ? <ChatPage /> : <IngestionPage />}
       </main>
-    </div>
+    </div >
   )
 }
 
 function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <DocumentStatusProvider>
+        <AppContent />
+        <Toaster position="top-right" richColors />
+      </DocumentStatusProvider>
     </AuthProvider>
   )
 }

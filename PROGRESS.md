@@ -33,4 +33,4 @@ Track your progress through the masterclass. Update this file as you complete mo
 - [x] Ingestion UI + file storage
 - [x] Document chunking + embeddings + pgvector
 - [x] Retrieval tool + tool calling
-- [ ] Realtime ingestion status
+- [x] Realtime ingestion status
