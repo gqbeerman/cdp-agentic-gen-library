@@ -99,7 +99,30 @@ export default function ChatPage() {
     }
 
     const handleSendMessage = async (content: string) => {
-        if (!activeThreadId || isStreaming) return
+        if (isStreaming) return
+
+        let currentThreadId = activeThreadId
+
+        if (!currentThreadId) {
+            try {
+                const res = await fetch(`${API_URL}/api/threads`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                })
+                if (res.ok) {
+                    const thread = await res.json()
+                    setThreads((prev) => [thread, ...prev])
+                    setActiveThreadId(thread.id)
+                    currentThreadId = thread.id
+                } else {
+                    console.error('Failed to create new thread')
+                    return
+                }
+            } catch (err) {
+                console.error('Failed to create thread:', err)
+                return
+            }
+        }
 
         // Add user message optimistically
         const userMessage: Message = {
@@ -116,7 +139,7 @@ export default function ChatPage() {
                 method: 'POST',
                 headers: getAuthHeaders(),
                 body: JSON.stringify({
-                    thread_id: activeThreadId,
+                    thread_id: currentThreadId,
                     message: content,
                 }),
             })
@@ -208,29 +231,15 @@ export default function ChatPage() {
                 </header>
 
                 {/* Messages */}
-                {activeThreadId ? (
-                    <>
-                        <MessageList
-                            messages={messages}
-                            streamingContent={streamingContent || undefined}
-                            isThinking={isStreaming}
-                        />
-                        <ChatInput
-                            onSend={handleSendMessage}
-                            disabled={isStreaming}
-                        />
-                    </>
-                ) : (
-                    <div className="flex flex-1 items-center justify-center text-muted-foreground">
-                        <div className="text-center space-y-4">
-                            <p className="text-xl font-medium">Welcome to Agentic RAG Library</p>
-                            <p className="text-sm">
-                                Select a conversation from the sidebar or start a new one.
-                            </p>
-                            <Button onClick={handleNewThread}>Start a New Chat</Button>
-                        </div>
-                    </div>
-                )}
+                <MessageList
+                    messages={messages}
+                    streamingContent={streamingContent || undefined}
+                    isThinking={isStreaming}
+                />
+                <ChatInput
+                    onSend={handleSendMessage}
+                    disabled={isStreaming}
+                />
             </div>
         </div>
     )

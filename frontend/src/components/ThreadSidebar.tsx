@@ -51,8 +51,8 @@ export default function ThreadSidebar({
                         <div
                             key={thread.id}
                             className={`group flex items-center rounded-lg px-3 py-2 text-sm cursor-pointer transition-colors ${activeThreadId === thread.id
-                                    ? 'bg-accent text-accent-foreground'
-                                    : 'hover:bg-accent/50 text-muted-foreground hover:text-foreground'
+                                ? 'bg-accent text-accent-foreground'
+                                : 'hover:bg-accent/50 text-muted-foreground hover:text-foreground'
                                 }`}
                             onClick={() => onSelectThread(thread.id)}
                         >
@@ -62,7 +62,7 @@ export default function ThreadSidebar({
                                     e.stopPropagation()
                                     onDeleteThread(thread.id)
                                 }}
-                                className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                                className="ml-2 opacity-50 hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                             >
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
