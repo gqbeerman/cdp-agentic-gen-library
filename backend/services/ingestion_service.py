@@ -31,8 +31,8 @@ def process_document(document_id: str, user_id: str, storage_path: str, file_typ
         file_bytes = supabase.storage.from_("documents").download(storage_path)
         
         # 3. Extract text
-        text_content = _extract_text(file_bytes, file_type)
-        if not text_content.strip():
+        extracted_docs = _extract_text(file_bytes, file_type)
+        if not extracted_docs:
             raise ValueError("No text could be extracted from this document.")
             
         # 4. Chunk text
@@ -43,28 +43,38 @@ def process_document(document_id: str, user_id: str, storage_path: str, file_typ
             length_function=len,
             is_separator_regex=False,
         )
-        chunks = text_splitter.split_text(text_content)
         
-        if not chunks:
+        texts = [doc["text"] for doc in extracted_docs]
+        metadatas = [doc["metadata"] for doc in extracted_docs]
+        
+        # This preserves the metadata for each generated chunk
+        chunked_docs = text_splitter.create_documents(texts, metadatas=metadatas)
+        
+        if not chunked_docs:
             raise ValueError("Document yielded 0 chunks.")
             
         # 5. Generate embeddings
         # The embedding service expects a list of strings and returns a list of float arrays
+        chunks = [doc.page_content for doc in chunked_docs]
         embeddings = embeddings_service.get_embeddings(chunks)
         
         # 6. Store in pgvector
         chunk_records = []
-        for i, chunk in enumerate(chunks):
+        for i, doc in enumerate(chunked_docs):
+            # Base metadata with chunk indices
+            meta = {
+                "chunk_index": i,
+                "total_chunks": len(chunked_docs)
+            }
+            # Add the preserved document metadata (e.g. page number)
+            meta.update(doc.metadata)
+            
             chunk_records.append({
                 "document_id": document_id,
                 "user_id": user_id,
-                "content": chunk,
+                "content": doc.page_content,
                 "embedding": embeddings[i],
-                "metadata": {
-                    "chunk_index": i,
-                    "total_chunks": len(chunks)
-                    # Could add more metadata here later like title, headers, etc.
-                }
+                "metadata": meta
             })
             
         # Insert all chunks in a single operation
@@ -86,25 +96,37 @@ def process_document(document_id: str, user_id: str, storage_path: str, file_typ
         }).eq("id", document_id).execute()
 
 
-def _extract_text(file_bytes: bytes, file_type: str) -> str:
-    """Helper to route parsing logic to the correct library based on MIME type."""
+def _extract_text(file_bytes: bytes, file_type: str) -> List[Dict[str, Any]]:
+    """Helper to route parsing logic to the correct library based on MIME type.
+    Returns a list of dicts containing 'text' and 'metadata'.
+    """
     file_io = BytesIO(file_bytes)
+    documents = []
     
     if file_type == "application/pdf":
         reader = pypdf.PdfReader(file_io)
-        text = ""
-        for page in reader.pages:
-            text += page.extract_text() + "\n"
-        return text
-        
+        for i, page in enumerate(reader.pages):
+            text = page.extract_text()
+            if text and text.strip():
+                documents.append({"text": text, "metadata": {"page": i + 1}})
+                
     elif "wordprocessingml.document" in file_type: # DOCX
         doc = docx.Document(file_io)
-        return "\n".join([paragraph.text for paragraph in doc.paragraphs])
+        # For DOCX, we treat paragraphs dynamically as "sections" or just aggregate
+        text = "\n".join([paragraph.text for paragraph in doc.paragraphs if paragraph.text.strip()])
+        if text:
+            documents.append({"text": text, "metadata": {}})
         
     elif "html" in file_type:
         soup = BeautifulSoup(file_io, "html.parser")
-        return soup.get_text(separator="\n", strip=True)
+        text = soup.get_text(separator="\n", strip=True)
+        if text:
+            documents.append({"text": text, "metadata": {}})
         
     else:
         # Fallback to plain text decoding (txt, md, csv)
-        return file_bytes.decode("utf-8")
+        text = file_bytes.decode("utf-8")
+        if text.strip():
+            documents.append({"text": text, "metadata": {}})
+            
+    return documents

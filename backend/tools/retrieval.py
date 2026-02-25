@@ -44,14 +44,19 @@ async def search_knowledge_base(query: str, user_id: str, limit: int = 5) -> str
         for i, match in enumerate(results):
             content = match.get("content", "").strip()
             similarity = match.get("similarity", 0)
+            metadata = match.get("metadata", {})
             
-            # Use metadata if available (e.g. filename from the document)
-            source_info = f"[Chunk {i+1} | Sim: {similarity:.2f}]"
+            # Extract page number or default to chunk index
+            page_num = metadata.get("page")
+            if page_num is not None:
+                source_info = f"[Page {page_num} | Chunk {i+1} | Sim: {similarity:.2f}]"
+            else:
+                source_info = f"[Section {i+1} | Sim: {similarity:.2f}]"
             
             formatted_chunks.append(f"{source_info}\n{content}")
             
         final_str = "\n\n---\n\n".join(formatted_chunks)
-        return f"Found {len(results)} relevant chunks in the knowledge base:\n\n{final_str}"
+        return f"Found {len(results)} relevant passages in the knowledge base:\n\n{final_str}"
         
     except Exception as e:
         print(f"[Tool Error] search_knowledge_base failed: {e}")

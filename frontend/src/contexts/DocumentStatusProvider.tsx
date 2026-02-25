@@ -19,7 +19,7 @@ interface DocumentStatusContextType {
     isLoading: boolean
     isProcessing: boolean
     error: string | null
-    refreshDocuments: () => Promise<void>
+    refreshDocuments: (background?: boolean) => Promise<void>
 }
 
 const DocumentStatusContext = createContext<DocumentStatusContextType | undefined>(undefined)
@@ -34,10 +34,10 @@ export function DocumentStatusProvider({ children }: { children: React.ReactNode
 
     const isProcessing = documents.some((doc) => doc.status === 'processing' || doc.status === 'uploaded')
 
-    const fetchDocuments = async () => {
+    const fetchDocuments = async (background: boolean = false) => {
         if (!session) return
         try {
-            setIsLoading(true)
+            if (!background) setIsLoading(true)
             const response = await fetch(`${API_URL}/api/documents`, {
                 headers: {
                     'Authorization': `Bearer ${session.access_token}`,
@@ -50,7 +50,7 @@ export function DocumentStatusProvider({ children }: { children: React.ReactNode
         } catch (err: any) {
             setError(err.message)
         } finally {
-            setIsLoading(false)
+            if (!background) setIsLoading(false)
         }
     }
 
@@ -78,7 +78,7 @@ export function DocumentStatusProvider({ children }: { children: React.ReactNode
                         const newDoc = payload.new as Document
                         setDocuments((prev) => [newDoc, ...prev])
                         if (newDoc.status === 'uploaded' || newDoc.status === 'processing') {
-                            toast.info(`Processing started for ${newDoc.filename}`)
+                            toast.info(`Processing started for ${newDoc.filename}`, { id: `processing-${newDoc.id}` })
                         }
                     } else if (payload.eventType === 'UPDATE') {
                         const updatedDoc = payload.new as Document
@@ -88,9 +88,9 @@ export function DocumentStatusProvider({ children }: { children: React.ReactNode
 
                             // Check if status changed to ready
                             if (oldDoc && oldDoc.status !== 'ready' && updatedDoc.status === 'ready') {
-                                toast.success(`${updatedDoc.filename} is ready for querying!`)
+                                toast.success(`${updatedDoc.filename} is ready for querying!`, { id: `ready-${updatedDoc.id}` })
                             } else if (oldDoc && oldDoc.status !== 'error' && updatedDoc.status === 'error') {
-                                toast.error(`Failed to process ${updatedDoc.filename}`)
+                                toast.error(`Failed to process ${updatedDoc.filename}`, { id: `error-${updatedDoc.id}` })
                             }
 
                             return prev.map((doc) => (doc.id === updatedDoc.id ? updatedDoc : doc))

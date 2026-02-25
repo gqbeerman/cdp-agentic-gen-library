@@ -43,7 +43,7 @@ def _get_client() -> OpenAI:
 SYSTEM_PROMPT = (
     "You are a helpful research assistant for the Agentic RAG Library. "
     "Answer questions clearly and concisely. "
-    "Cite your sources when referencing documents."
+    "When referencing information from the retrieved documents, you MUST cite your sources using the exact labels provided in the context blocks (e.g. '[Page 4]', '[Section 2]'). Do not use generic numbers or abstract chunk references."
 )
 
 

@@ -62,7 +62,8 @@ export default function IngestionPage() {
                 <FileUploadZone
                     onUploadStart={() => setLocalError(null)}
                     onUploadSuccess={() => {
-                        refreshDocuments()
+                        // Pass true for background processing to avoid unmounting the table
+                        refreshDocuments(true)
                     }}
                     onUploadError={(err) => setLocalError(err)}
                 />
