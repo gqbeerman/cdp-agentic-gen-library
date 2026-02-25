@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+openai
+langsmith
+python-dotenv
+supabase
+pydantic
+sse-starlette
+PyJWT

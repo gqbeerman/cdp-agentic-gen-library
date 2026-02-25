@@ -10,3 +10,12 @@ Track your progress through the masterclass. Update this file as you complete mo
 ## Modules
 
 ### Module 1: App Shell + Observability
+- [x] Frontend scaffold (React + Vite + TS + Tailwind + shadcn/ui)
+- [x] Backend scaffold (Python + FastAPI + venv)
+- [x] Supabase `user_threads` table with RLS
+- [x] Auth flow (frontend context + login page + JWT middleware)
+- [x] OpenAI Responses API integration (threads, messages, streaming)
+- [x] Chat API endpoints (threads CRUD + chat SSE)
+- [x] Chat UI (thread sidebar + message list + chat input)
+- [x] LangSmith tracing setup
+- [x] Manual verification (auth flow, chat flow, thread management)
