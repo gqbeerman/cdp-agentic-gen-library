@@ -56,13 +56,13 @@ export default function ThreadSidebar({
                                 }`}
                             onClick={() => onSelectThread(thread.id)}
                         >
-                            <span className="flex-1 truncate">{thread.title}</span>
+                            <span className="flex-1 truncate min-w-0">{thread.title}</span>
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation()
                                     onDeleteThread(thread.id)
                                 }}
-                                className="ml-2 opacity-50 hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                                className="ml-2 shrink-0 opacity-50 hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                             >
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"

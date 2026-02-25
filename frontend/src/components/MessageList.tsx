@@ -27,7 +27,7 @@ export default function MessageList({
 
     if (messages.length === 0 && !streamingContent) {
         return (
-            <div className="flex flex-1 items-center justify-center text-muted-foreground">
+            <div className="flex flex-1 min-h-0 items-center justify-center text-muted-foreground">
                 <div className="text-center space-y-2">
                     <p className="text-lg font-medium">Start a conversation</p>
                     <p className="text-sm">Send a message to begin chatting.</p>
