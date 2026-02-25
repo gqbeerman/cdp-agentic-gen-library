@@ -22,3 +22,15 @@ Track your progress through the masterclass. Update this file as you complete mo
 - [x] File citation resolution (OpenAI file annotations → actual filenames)
 - [x] Animated thinking indicator (CSS-only responsive generator with spinning turbine, rem units, oklch theme colors)
 - [x] Manual verification (auth flow, chat flow, thread management)
+
+### Module 2: BYO Retrieval + Memory
+- [x] Provider abstraction layer (OpenAI, OpenRouter, Ollama, LM Studio via `provider_config.py`)
+- [x] Chat Completions API migration (`completions_service.py` replaces Responses API)
+- [x] Self-managed chat history (`chat_messages` table + `message_service.py`)
+- [x] Removed `openai_service.py` (Option A: full replace)
+- [x] Refactored routers (threads no longer call OpenAI, messages stored in Supabase)
+- [x] LangSmith tracing with model/provider metadata
+- [x] Ingestion UI + file storage
+- [ ] Document chunking + embeddings + pgvector
+- [ ] Retrieval tool + tool calling
+- [ ] Realtime ingestion status

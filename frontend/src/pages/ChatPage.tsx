@@ -147,10 +147,6 @@ export default function ChatPage() {
                                     fullContent += parsed.content
                                     setStreamingContent(fullContent)
                                 }
-                                if (parsed.citations_resolved) {
-                                    fullContent = parsed.citations_resolved
-                                    setStreamingContent(fullContent)
-                                }
                                 if (parsed.title_update) {
                                     setThreads((prev) =>
                                         prev.map((t) =>

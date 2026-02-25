@@ -7,8 +7,7 @@ load_dotenv()  # Must be before router imports so env vars are available
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from routers import chat, threads
-
+from routers import chat, threads, documents
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -38,6 +37,7 @@ app.add_middleware(
 # Routers
 app.include_router(chat.router)
 app.include_router(threads.router)
+app.include_router(documents.router)
 
 
 @app.get("/health")

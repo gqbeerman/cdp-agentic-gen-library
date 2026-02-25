@@ -6,11 +6,7 @@ from fastapi import APIRouter, Request, HTTPException
 from supabase import create_client, Client
 
 from middleware.auth import get_user_id
-from services.openai_service import (
-    create_thread as create_openai_thread,
-    delete_thread as delete_openai_thread,
-    get_thread_messages,
-)
+from services.message_service import get_messages
 
 router = APIRouter(prefix="/api/threads", tags=["threads"])
 
@@ -47,16 +43,12 @@ async def create_thread(request: Request):
     """Create a new thread."""
     user_id = get_user_id(request)
 
-    # Create thread on OpenAI
-    openai_thread_id = create_openai_thread()
-
-    # Store mapping in Supabase
+    # Just insert into user_threads — no external API call needed
     result = (
         _get_supabase().table("user_threads")
         .insert(
             {
                 "user_id": user_id,
-                "thread_id": openai_thread_id,
                 "title": "New Chat",
             }
         )
@@ -68,13 +60,13 @@ async def create_thread(request: Request):
 
 @router.delete("/{thread_id}")
 async def delete_thread(thread_id: str, request: Request):
-    """Delete a thread."""
+    """Delete a thread. Messages cascade-delete via FK constraint."""
     user_id = get_user_id(request)
 
-    # Get the OpenAI thread ID first
+    # Verify ownership
     result = (
         _get_supabase().table("user_threads")
-        .select("thread_id")
+        .select("id")
         .eq("id", thread_id)
         .eq("user_id", user_id)
         .execute()
@@ -83,12 +75,7 @@ async def delete_thread(thread_id: str, request: Request):
     if not result.data:
         raise HTTPException(status_code=404, detail="Thread not found")
 
-    openai_thread_id = result.data[0]["thread_id"]
-
-    # Delete from OpenAI
-    delete_openai_thread(openai_thread_id)
-
-    # Delete from Supabase
+    # Delete from Supabase — chat_messages cascade-delete automatically
     _get_supabase().table("user_threads").delete().eq("id", thread_id).eq(
         "user_id", user_id
     ).execute()
@@ -104,7 +91,7 @@ async def list_messages(thread_id: str, request: Request):
     # Verify the thread belongs to the user
     result = (
         _get_supabase().table("user_threads")
-        .select("thread_id")
+        .select("id")
         .eq("id", thread_id)
         .eq("user_id", user_id)
         .execute()
@@ -113,6 +100,5 @@ async def list_messages(thread_id: str, request: Request):
     if not result.data:
         raise HTTPException(status_code=404, detail="Thread not found")
 
-    openai_thread_id = result.data[0]["thread_id"]
-    messages = get_thread_messages(openai_thread_id)
+    messages = get_messages(thread_id)
     return messages

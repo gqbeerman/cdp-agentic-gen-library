@@ -9,7 +9,9 @@ from sse_starlette.sse import EventSourceResponse
 from supabase import create_client, Client
 
 from middleware.auth import get_user_id
-from services.openai_service import run_and_stream, generate_title
+from services.completions_service import chat_stream, generate_title, SYSTEM_PROMPT
+from services.message_service import save_message, build_completion_messages
+from services.provider_config import get_provider_config
 
 router = APIRouter(prefix="/api", tags=["chat"])
 
@@ -39,7 +41,7 @@ async def chat(request: Request, body: ChatRequest):
     # Verify the thread belongs to the user and get its current title
     result = (
         _get_supabase().table("user_threads")
-        .select("thread_id, title")
+        .select("id, title")
         .eq("id", body.thread_id)
         .eq("user_id", user_id)
         .execute()
@@ -48,22 +50,37 @@ async def chat(request: Request, body: ChatRequest):
     if not result.data:
         raise HTTPException(status_code=404, detail="Thread not found")
 
-    openai_thread_id = result.data[0]["thread_id"]
     current_title = result.data[0]["title"]
+    config = get_provider_config()
+
+    # Save the user message to our database
+    save_message(
+        thread_id=body.thread_id,
+        role="user",
+        content=body.message,
+    )
+
+    # Build the full messages array (system + history)
+    messages = build_completion_messages(body.thread_id, SYSTEM_PROMPT)
 
     async def event_generator():
+        full_response = ""
         try:
-            async for chunk in run_and_stream(openai_thread_id, body.message):
-                if chunk.startswith("__CITATIONS_RESOLVED__"):
-                    resolved_text = chunk[len("__CITATIONS_RESOLVED__"):]
-                    yield {
-                        "data": json.dumps({"citations_resolved": resolved_text}),
-                    }
-                else:
-                    yield {
-                        "data": json.dumps({"content": chunk}),
-                    }
+            async for chunk in chat_stream(messages, thread_id=body.thread_id):
+                full_response += chunk
+                yield {
+                    "data": json.dumps({"content": chunk}),
+                }
             yield {"data": "[DONE]"}
+
+            # Save the assistant response to our database
+            save_message(
+                thread_id=body.thread_id,
+                role="assistant",
+                content=full_response,
+                model=config["model"],
+                provider=config["provider"],
+            )
 
             # Auto-generate title on the first message
             if current_title == "New Chat":

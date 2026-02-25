@@ -1,4 +1,4 @@
-"""LangSmith tracing for OpenAI interactions."""
+"""LangSmith tracing for chat interactions."""
 
 import os
 import logging
@@ -13,18 +13,19 @@ def trace_chat(
     thread_id: str,
     user_message: str,
     assistant_response: str,
+    model: str | None = None,
+    provider: str | None = None,
 ) -> None:
     """Trace a chat interaction with LangSmith.
 
     Uses the langsmith SDK to create a manual run trace for the
-    completed chat interaction.
+    completed chat interaction, including model and provider metadata.
     """
     if not _langsmith_enabled:
         logger.debug("LangSmith not configured — skipping trace")
         return
 
     try:
-        from langsmith import Client
         from langsmith.run_trees import RunTree
 
         rt = RunTree(
@@ -36,6 +37,12 @@ def trace_chat(
             },
             outputs={
                 "response": assistant_response,
+            },
+            extra={
+                "metadata": {
+                    "model": model,
+                    "provider": provider,
+                },
             },
         )
         rt.end()
