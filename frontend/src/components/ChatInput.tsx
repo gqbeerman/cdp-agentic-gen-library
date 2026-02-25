@@ -35,7 +35,7 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="flex items-end gap-2 p-4 border-t">
+        <form onSubmit={handleSubmit} className="sticky bottom-0 flex items-end gap-2 p-4 border-t bg-background">
             <textarea
                 ref={textareaRef}
                 value={message}

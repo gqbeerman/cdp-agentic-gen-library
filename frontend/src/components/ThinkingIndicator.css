@@ -353,39 +353,6 @@
     }
 }
 
-/* ─── Pulsing Energy Rings ─── */
-.energy-ring {
-    position: absolute;
-    left: 50%;
-    top: 55%;
-    width: 2.5rem;
-    height: 2.5rem;
-    border: 0.1rem solid color-mix(in oklch, var(--primary) 30%, transparent);
-    border-radius: 50%;
-    transform: translate(-50%, -50%) scale(0.8);
-    opacity: 0;
-}
-
-.ring-1 {
-    animation: pulseRing 2.5s ease-out infinite 0s;
-}
-
-.ring-2 {
-    animation: pulseRing 2.5s ease-out infinite 1.25s;
-}
-
-@keyframes pulseRing {
-    0% {
-        transform: translate(-50%, -50%) scale(0.8);
-        opacity: 0.5;
-    }
-
-    100% {
-        transform: translate(-50%, -50%) scale(2);
-        opacity: 0;
-    }
-}
-
 /* ─── Text ─── */
 .thinking-text-group {
     display: flex;

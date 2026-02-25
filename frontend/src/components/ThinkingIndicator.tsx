@@ -52,9 +52,6 @@ export default function ThinkingIndicator() {
                         <div className="spark spark-3" />
                         <div className="spark spark-4" />
 
-                        {/* Pulsing energy rings */}
-                        <div className="energy-ring ring-1" />
-                        <div className="energy-ring ring-2" />
                     </div>
 
                     <div className="thinking-text-group">
