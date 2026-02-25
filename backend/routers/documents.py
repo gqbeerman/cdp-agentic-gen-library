@@ -150,6 +150,13 @@ async def delete_document(doc_id: str, request: Request):
         import logging
         logging.warning(f"Failed to delete storage file: {e}")
 
+    # Delete chunks first to avoid foreign key constraints (if ON DELETE CASCADE is missing)
+    try:
+        _get_supabase().table("document_chunks").delete().eq("document_id", doc_id).execute()
+    except Exception as e:
+        import logging
+        logging.warning(f"Failed to cleanly delete document chunks: {e}")
+
     # Delete from database
     _get_supabase().table("documents").delete().eq("id", doc_id).eq(
         "user_id", user_id
