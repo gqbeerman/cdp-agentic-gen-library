@@ -50,19 +50,19 @@ export default function ThreadSidebar({
                     {threads.map((thread) => (
                         <div
                             key={thread.id}
-                            className={`group flex items-center rounded-lg px-3 py-2 text-sm cursor-pointer transition-colors ${activeThreadId === thread.id
+                            className={`group flex items-center justify-between w-full overflow-hidden rounded-lg px-3 py-2 text-sm cursor-pointer transition-colors ${activeThreadId === thread.id
                                 ? 'bg-accent text-accent-foreground'
                                 : 'hover:bg-accent/50 text-muted-foreground hover:text-foreground'
                                 }`}
                             onClick={() => onSelectThread(thread.id)}
                         >
-                            <span className="flex-1 truncate min-w-0">{thread.title}</span>
+                            <span className="flex-1 truncate min-w-0 pr-2">{thread.title}</span>
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation()
                                     onDeleteThread(thread.id)
                                 }}
-                                className="ml-2 shrink-0 opacity-50 hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                                className="shrink-0 text-muted-foreground hover:text-destructive"
                             >
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
