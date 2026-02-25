@@ -18,4 +18,7 @@ Track your progress through the masterclass. Update this file as you complete mo
 - [x] Chat API endpoints (threads CRUD + chat SSE)
 - [x] Chat UI (thread sidebar + message list + chat input)
 - [x] LangSmith tracing setup
+- [x] Auto-generated thread titles (first message → AI-generated title via SSE)
+- [x] File citation resolution (OpenAI file annotations → actual filenames)
+- [x] Animated thinking indicator (CSS-only responsive generator with spinning turbine, rem units, oklch theme colors)
 - [x] Manual verification (auth flow, chat flow, thread management)

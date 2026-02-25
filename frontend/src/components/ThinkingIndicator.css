@@ -1,0 +1,436 @@
+/* ═══════════════════════════════════════════
+   ThinkingIndicator — Pure CSS Generator
+   All sizes in rem for responsive scaling
+   Colors use oklch to match shadcn/ui v4
+   ═══════════════════════════════════════════ */
+
+.thinking-container {
+    background: var(--muted);
+    border-radius: 1rem;
+    padding: 1.25rem 1.5rem;
+    animation: fadeSlideIn 0.3s ease-out;
+}
+
+@keyframes fadeSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(0.5rem);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.thinking-layout {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* ─── Generator Wrapper ─── */
+.generator {
+    position: relative;
+    width: 5rem;
+    height: 5rem;
+    flex-shrink: 0;
+    animation: gen-hover 2s ease-in-out infinite;
+}
+
+@keyframes gen-hover {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-0.15rem);
+    }
+}
+
+/* ─── Generator Body ─── */
+.gen-body {
+    position: absolute;
+    bottom: 0.25rem;
+    left: 0.5rem;
+    width: 4rem;
+    height: 2.75rem;
+    background: color-mix(in oklch, var(--foreground) 10%, transparent);
+    border: 0.15rem solid color-mix(in oklch, var(--foreground) 45%, transparent);
+    border-radius: 0.35rem;
+    overflow: hidden;
+}
+
+/* Vent lines */
+.gen-vents {
+    position: absolute;
+    left: 0.35rem;
+    top: 0.45rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.vent {
+    width: 0.6rem;
+    height: 0.15rem;
+    background: color-mix(in oklch, var(--foreground) 35%, transparent);
+    border-radius: 0.1rem;
+}
+
+/* ─── Spinning Turbine ─── */
+.turbine {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 2rem;
+    height: 2rem;
+    transform: translate(-50%, -50%);
+}
+
+.turbine-blade-group {
+    position: absolute;
+    inset: 0;
+    animation: spin 1s linear infinite;
+}
+
+.blade {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0.2rem;
+    height: 100%;
+    background: var(--primary);
+    border-radius: 0.1rem;
+    transform-origin: center center;
+}
+
+.blade-h {
+    transform: translate(-50%, -50%) rotate(0deg);
+}
+
+.blade-v {
+    transform: translate(-50%, -50%) rotate(90deg);
+}
+
+.blade-d1 {
+    transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.blade-d2 {
+    transform: translate(-50%, -50%) rotate(135deg);
+}
+
+.turbine-center {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0.5rem;
+    height: 0.5rem;
+    background: var(--primary);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 0.4rem color-mix(in oklch, var(--primary) 50%, transparent);
+    animation: center-glow 1.2s ease-in-out infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes center-glow {
+
+    0%,
+    100% {
+        box-shadow: 0 0 0.3rem color-mix(in oklch, var(--primary) 40%, transparent);
+    }
+
+    50% {
+        box-shadow: 0 0 0.6rem color-mix(in oklch, var(--primary) 80%, transparent);
+    }
+}
+
+/* Turbine outer ring */
+.turbine::before {
+    content: '';
+    position: absolute;
+    inset: -0.1rem;
+    border: 0.15rem solid color-mix(in oklch, var(--primary) 60%, transparent);
+    border-radius: 50%;
+}
+
+/* ─── Panel Lights ─── */
+.panel-lights {
+    position: absolute;
+    right: 0.35rem;
+    bottom: 0.35rem;
+    display: flex;
+    gap: 0.3rem;
+}
+
+.panel-light {
+    width: 0.35rem;
+    height: 0.35rem;
+    border-radius: 50%;
+}
+
+.light-green {
+    background: oklch(0.65 0.2 145);
+    box-shadow: 0 0 0.25rem oklch(0.65 0.2 145 / 0.6);
+    animation: blink-g 1s ease-in-out infinite;
+}
+
+.light-amber {
+    background: oklch(0.7 0.15 70);
+    box-shadow: 0 0 0.25rem oklch(0.7 0.15 70 / 0.6);
+    animation: blink-a 0.6s ease-in-out infinite;
+}
+
+@keyframes blink-g {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.25;
+    }
+}
+
+@keyframes blink-a {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.15;
+    }
+}
+
+/* ─── Exhaust Stack ─── */
+.exhaust-stack {
+    position: absolute;
+    left: 1.1rem;
+    bottom: 2.75rem;
+    width: 0.7rem;
+    height: 0.8rem;
+    background: color-mix(in oklch, var(--foreground) 12%, transparent);
+    border: 0.12rem solid color-mix(in oklch, var(--foreground) 40%, transparent);
+    border-bottom: none;
+    border-radius: 0.1rem 0.1rem 0 0;
+}
+
+.exhaust-cap {
+    position: absolute;
+    top: -0.35rem;
+    left: -0.2rem;
+    width: 1.1rem;
+    height: 0.35rem;
+    background: color-mix(in oklch, var(--foreground) 15%, transparent);
+    border: 0.12rem solid color-mix(in oklch, var(--foreground) 40%, transparent);
+    border-radius: 0.15rem;
+}
+
+/* ─── Smoke Puffs ─── */
+.smoke-group {
+    position: absolute;
+    left: 1rem;
+    bottom: 3.5rem;
+}
+
+.smoke {
+    position: absolute;
+    border-radius: 50%;
+    background: color-mix(in oklch, var(--foreground) 15%, transparent);
+    animation: rise 2.5s ease-out infinite;
+}
+
+.s1 {
+    width: 0.5rem;
+    height: 0.5rem;
+    left: 0;
+    bottom: 0;
+    animation-delay: 0s;
+}
+
+.s2 {
+    width: 0.6rem;
+    height: 0.6rem;
+    left: -0.2rem;
+    bottom: 0.3rem;
+    animation-delay: 0.7s;
+}
+
+.s3 {
+    width: 0.45rem;
+    height: 0.45rem;
+    left: 0.15rem;
+    bottom: 0.7rem;
+    animation-delay: 1.4s;
+}
+
+@keyframes rise {
+    0% {
+        opacity: 0.5;
+        transform: translateY(0) scale(0.6);
+    }
+
+    60% {
+        opacity: 0.2;
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(-1rem) scale(1.5);
+    }
+}
+
+/* ─── Energy Sparks ─── */
+.spark {
+    position: absolute;
+    width: 0.25rem;
+    height: 0.25rem;
+    background: var(--primary);
+    border-radius: 50%;
+    box-shadow: 0 0 0.3rem color-mix(in oklch, var(--primary) 60%, transparent);
+    opacity: 0;
+}
+
+.spark-1 {
+    left: -0.1rem;
+    top: 1.5rem;
+    animation: sparkFloat 2s ease-in-out infinite 0s;
+}
+
+.spark-2 {
+    right: -0.1rem;
+    top: 1.5rem;
+    animation: sparkFloat 2s ease-in-out infinite 0.5s;
+}
+
+.spark-3 {
+    left: 0.2rem;
+    top: 0.8rem;
+    animation: sparkFloat 1.8s ease-in-out infinite 1s;
+}
+
+.spark-4 {
+    right: 0.2rem;
+    top: 0.8rem;
+    animation: sparkFloat 1.8s ease-in-out infinite 1.5s;
+}
+
+@keyframes sparkFloat {
+    0% {
+        opacity: 0;
+        transform: translateY(0) scale(0.5);
+    }
+
+    25% {
+        opacity: 1;
+        transform: translateY(-0.3rem) scale(1);
+    }
+
+    75% {
+        opacity: 0.4;
+        transform: translateY(-0.8rem) scale(0.7);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(-1.2rem) scale(0.3);
+    }
+}
+
+/* ─── Pulsing Energy Rings ─── */
+.energy-ring {
+    position: absolute;
+    left: 50%;
+    top: 55%;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 0.1rem solid color-mix(in oklch, var(--primary) 30%, transparent);
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 0;
+}
+
+.ring-1 {
+    animation: pulseRing 2.5s ease-out infinite 0s;
+}
+
+.ring-2 {
+    animation: pulseRing 2.5s ease-out infinite 1.25s;
+}
+
+@keyframes pulseRing {
+    0% {
+        transform: translate(-50%, -50%) scale(0.8);
+        opacity: 0.5;
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(2);
+        opacity: 0;
+    }
+}
+
+/* ─── Text ─── */
+.thinking-text-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.thinking-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--foreground);
+}
+
+.thinking-sub {
+    font-size: 0.75rem;
+    color: var(--muted-foreground);
+}
+
+/* Animated dots */
+.dot {
+    animation: dotPulse 1.4s ease-in-out infinite;
+    opacity: 0;
+}
+
+.d1 {
+    animation-delay: 0s;
+}
+
+.d2 {
+    animation-delay: 0.2s;
+}
+
+.d3 {
+    animation-delay: 0.4s;
+}
+
+@keyframes dotPulse {
+
+    0%,
+    80%,
+    100% {
+        opacity: 0;
+    }
+
+    40% {
+        opacity: 1;
+    }
+}

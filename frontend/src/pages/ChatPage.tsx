@@ -147,6 +147,19 @@ export default function ChatPage() {
                                     fullContent += parsed.content
                                     setStreamingContent(fullContent)
                                 }
+                                if (parsed.citations_resolved) {
+                                    fullContent = parsed.citations_resolved
+                                    setStreamingContent(fullContent)
+                                }
+                                if (parsed.title_update) {
+                                    setThreads((prev) =>
+                                        prev.map((t) =>
+                                            t.id === parsed.title_update.thread_id
+                                                ? { ...t, title: parsed.title_update.title }
+                                                : t
+                                        )
+                                    )
+                                }
                             } catch {
                                 // Skip non-JSON data lines
                             }
@@ -204,6 +217,7 @@ export default function ChatPage() {
                         <MessageList
                             messages={messages}
                             streamingContent={streamingContent || undefined}
+                            isThinking={isStreaming}
                         />
                         <ChatInput
                             onSend={handleSendMessage}

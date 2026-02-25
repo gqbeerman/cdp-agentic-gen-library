@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import ThinkingIndicator from './ThinkingIndicator'
 
 export interface Message {
     id: string
@@ -10,17 +11,19 @@ export interface Message {
 interface MessageListProps {
     messages: Message[]
     streamingContent?: string
+    isThinking?: boolean
 }
 
 export default function MessageList({
     messages,
     streamingContent,
+    isThinking,
 }: MessageListProps) {
     const bottomRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-    }, [messages, streamingContent])
+    }, [messages, streamingContent, isThinking])
 
     if (messages.length === 0 && !streamingContent) {
         return (
@@ -43,14 +46,18 @@ export default function MessageList({
                     >
                         <div
                             className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${msg.role === 'user'
-                                    ? 'bg-primary text-primary-foreground'
-                                    : 'bg-muted text-foreground'
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-muted text-foreground'
                                 }`}
                         >
                             <div className="whitespace-pre-wrap">{msg.content}</div>
                         </div>
                     </div>
                 ))}
+
+                {isThinking && !streamingContent && (
+                    <ThinkingIndicator />
+                )}
 
                 {streamingContent && (
                     <div className="flex justify-start">

@@ -1,6 +1,7 @@
 """Wrapper around the OpenAI Responses API for thread-based chat with file_search."""
 
 import os
+import re
 from typing import AsyncGenerator
 
 from openai import OpenAI
@@ -33,6 +34,33 @@ def delete_thread(thread_id: str) -> None:
         pass
 
 
+# Cache file_id -> filename lookups to avoid repeated API calls
+_file_name_cache: dict[str, str] = {}
+
+
+def _resolve_citations(text: str, annotations: list) -> str:
+    """Replace citation markers like 【4:2†source】 with actual filenames."""
+    if not annotations:
+        return text
+
+    for annotation in annotations:
+        if hasattr(annotation, "file_citation") and annotation.file_citation:
+            file_id = annotation.file_citation.file_id
+            # Look up the filename (with caching)
+            if file_id not in _file_name_cache:
+                try:
+                    file_obj = _get_client().files.retrieve(file_id)
+                    _file_name_cache[file_id] = file_obj.filename
+                except Exception:
+                    _file_name_cache[file_id] = "unknown file"
+
+            filename = _file_name_cache[file_id]
+            # Replace the annotation marker with a readable citation
+            text = text.replace(annotation.text, f" [{filename}]")
+
+    return text
+
+
 def get_thread_messages(thread_id: str) -> list[dict]:
     """Retrieve all messages from a thread, sorted oldest first."""
     messages = _get_client().beta.threads.messages.list(thread_id=thread_id, order="asc")
@@ -41,7 +69,10 @@ def get_thread_messages(thread_id: str) -> list[dict]:
         content_text = ""
         for content_block in msg.content:
             if content_block.type == "text":
-                content_text += content_block.text.value
+                content_text = _resolve_citations(
+                    content_block.text.value,
+                    content_block.text.annotations,
+                )
         result.append(
             {
                 "id": msg.id,
@@ -66,6 +97,8 @@ async def run_and_stream(thread_id: str, user_message: str) -> AsyncGenerator[st
     """Add a message and stream the assistant response.
     
     Yields chunks of the assistant's response text as they arrive.
+    After streaming, yields a special __CITATIONS_RESOLVED__ marker followed
+    by the fully resolved text (with real filenames instead of source markers).
     """
     # Add the user message
     add_message(thread_id, user_message)
@@ -80,12 +113,54 @@ async def run_and_stream(thread_id: str, user_message: str) -> AsyncGenerator[st
             full_response += text
             yield text
 
+    # Resolve citations from the final assistant message
+    try:
+        messages = _get_client().beta.threads.messages.list(
+            thread_id=thread_id, order="desc", limit=1
+        )
+        if messages.data:
+            last_msg = messages.data[0]
+            for content_block in last_msg.content:
+                if content_block.type == "text" and content_block.text.annotations:
+                    resolved = _resolve_citations(
+                        content_block.text.value,
+                        content_block.text.annotations,
+                    )
+                    # Signal the resolved text to the caller
+                    yield f"__CITATIONS_RESOLVED__{resolved}"
+                    full_response = resolved
+    except Exception:
+        pass
+
     # Trace the completed interaction
     trace_chat(
         thread_id=thread_id,
         user_message=user_message,
         assistant_response=full_response,
     )
+
+
+def generate_title(user_message: str) -> str:
+    """Generate a short title for a thread based on the first user message."""
+    try:
+        response = _get_client().chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "Generate a very short title (3-6 words) that summarizes the user's message. "
+                        "Do not use quotes or punctuation. Just return the title text."
+                    ),
+                },
+                {"role": "user", "content": user_message},
+            ],
+            max_tokens=20,
+            temperature=0.5,
+        )
+        return response.choices[0].message.content.strip()
+    except Exception:
+        return "New Chat"
 
 
 _assistant_id: str | None = None
