@@ -38,3 +38,51 @@ RAG app with chat (default) and document ingestion interfaces. Config via env va
 
 ## Progress
 Check PROGRESS.md for current module status. Update it as you complete tasks.
+
+### Service Scripts
+All scripts are in the `scripts/` folder. Run with: `powershell -File scripts/<script>.ps1`
+
+| Script | Description |
+|--------|-------------|
+| `start-all.ps1` | Start both backend and frontend in new windows |
+| `start-backend.ps1` | Start backend only (http://localhost:8000) |
+| `start-frontend.ps1` | Start frontend only (http://localhost:5173) |
+| `stop-all.ps1` | Stop both services |
+| `stop-backend.ps1` | Stop backend only |
+| `stop-frontend.ps1` | Stop frontend only |
+| `restart-all.ps1` | Restart both services |
+| `restart-backend.ps1` | Restart backend only |
+| `restart-frontend.ps1` | Restart frontend only |
+
+### Quick Commands
+```powershell
+# Start all services
+powershell -File scripts/start-all.ps1
+
+# Restart backend (after code changes)
+powershell -File scripts/restart-backend.ps1
+
+# Stop everything
+powershell -File scripts/stop-all.ps1
+```
+
+### Verify Services
+- Backend health: `curl http://localhost:8000/health` should return `{"status":"ok"}`
+- Frontend: Open http://localhost:5173 in browser
+
+## Test Credentials
+For browser testing and validation:
+- **Email:** test@agenticrag.com
+- **Password:** testpassword123
+
+## Testing Process
+Never create a new user for testing purposes. Always use the test user credentials above.
+- when entering credentials in the browser fist select "Login" not "Sign Up"
+- before entering credentials clear the credential fields to ensure the correct credentials are used
+
+## Progress
+Check PROGRESS.md for current module status. Update it as you complete tasks.
+
+# Notes
+
+The Python Virtual Environemtn is located in the folder /backend/venv/ NOT .venv
