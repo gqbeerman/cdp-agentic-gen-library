@@ -53,7 +53,10 @@ def _get_routed_client(model: str, provider_keys: dict[str, str] | None = None, 
             return OpenAI(api_key=provider_keys["openai"]), "openai"
             
     # 2. OpenRouter Fallback
-    or_key = openrouter_api_key or (provider_keys.get("openrouter") if provider_keys else None)
+    or_key = (openrouter_api_key or (provider_keys.get("openrouter") if provider_keys else None))
+    if or_key:
+        or_key = or_key.strip()
+
     if or_key and ("/" in actual_model or config["provider"] == "openrouter"):
         return OpenAI(
             base_url="https://openrouter.ai/api/v1",
@@ -98,7 +101,6 @@ async def chat_stream(
     """Stream a chat completion from the configured provider, handling tools."""
     config = _get_config()
     actual_model = model or config["model"]
-    
     client, provider_name = _get_routed_client(actual_model, provider_keys, openrouter_api_key)
 
     tools = [retrieval_tool_schema]

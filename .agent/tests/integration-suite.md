@@ -8,7 +8,7 @@ This document serves as the prompt payload for an agent checking if new features
 3. Use test credentials ONLY: 
    - **Email:** `test@agenticrag.com`
    - **Password:** `testpassword123`
-   - **OpenRouter API Key:** `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`
+   - **OpenRouter API Key:** `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`
 
 ---
 

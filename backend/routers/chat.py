@@ -2,6 +2,7 @@
 
 import json
 import os
+import logging
 
 from fastapi import APIRouter, Request, HTTPException
 from pydantic import BaseModel
@@ -12,6 +13,8 @@ from middleware.auth import get_user_id
 from services.completions_service import chat_stream, generate_title, get_system_prompt
 from services.message_service import save_message, build_completion_messages
 from services.provider_config import get_provider_config
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["chat"])
 
@@ -39,9 +42,7 @@ class ChatRequest(BaseModel):
 
 @router.post("/chat")
 async def chat(request: Request, body: ChatRequest):
-    """Send a message and stream the assistant's response via SSE."""
     user_id = get_user_id(request)
-
     # Verify the thread belongs to the user and get its current title
     result = (
         _get_supabase().table("user_threads")
