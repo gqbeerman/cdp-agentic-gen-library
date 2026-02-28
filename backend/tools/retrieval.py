@@ -14,7 +14,7 @@ supabase: Client = create_client(supabase_url, supabase_key)
 class SearchKnowledgeBaseArgs(BaseModel):
     query: str = Field(..., description="The search query to look up in the knowledge base. This should be a concise statement or question capturing the user's intent.")
 
-async def search_knowledge_base(query: str, user_id: str, limit: int = 5) -> str:
+async def search_knowledge_base(query: str, user_id: str, limit: int = 5, embedding_model: str | None = None, openrouter_api_key: str | None = None) -> str:
     """
     Search the vector database for chunks most similar to the query.
     """
@@ -22,7 +22,7 @@ async def search_knowledge_base(query: str, user_id: str, limit: int = 5) -> str
         print(f"[Tool] Executing search_knowledge_base for query: '{query}'")
         
         # 1. Embed the search query
-        query_embedding = embeddings_service.get_embeddings([query])[0]
+        query_embedding = embeddings_service.get_embeddings([query], model=embedding_model, openrouter_api_key=openrouter_api_key)[0]
         
         # 2. Call the RPC function via Supabase
         response = supabase.rpc(

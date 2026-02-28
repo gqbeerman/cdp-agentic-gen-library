@@ -4,6 +4,7 @@ import ThreadSidebar, { type Thread } from '@/components/ThreadSidebar'
 import MessageList, { type Message } from '@/components/MessageList'
 import ChatInput from '@/components/ChatInput'
 import { Button } from '@/components/ui/button'
+import { useSettings } from '@/contexts/SettingsContext'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -14,6 +15,10 @@ export default function ChatPage() {
     const [messages, setMessages] = useState<Message[]>([])
     const [streamingContent, setStreamingContent] = useState('')
     const [isStreaming, setIsStreaming] = useState(false)
+    const {
+        llmModel, embeddingModel,
+        openRouterKey, openaiKey, googleKey, xaiKey
+    } = useSettings()
 
     const getAuthHeaders = useCallback(() => {
         return {
@@ -141,6 +146,15 @@ export default function ChatPage() {
                 body: JSON.stringify({
                     thread_id: currentThreadId,
                     message: content,
+                    model: llmModel,
+                    embedding_model: embeddingModel,
+                    openrouter_api_key: openRouterKey,
+                    provider_keys: {
+                        openai: openaiKey,
+                        google: googleKey,
+                        xai: xaiKey,
+                        openrouter: openRouterKey
+                    }
                 }),
             })
 
@@ -178,6 +192,11 @@ export default function ChatPage() {
                                                 : t
                                         )
                                     )
+                                }
+                                if (parsed.error) {
+                                    console.error('Backend streaming error:', parsed.error)
+                                    fullContent += `\n\n**Error:** ${parsed.error}`
+                                    setStreamingContent(fullContent)
                                 }
                             } catch {
                                 // Skip non-JSON data lines

@@ -18,6 +18,8 @@ RAG app with chat (default) and document ingestion interfaces. Config via env va
 - Use Supabase Realtime for ingestion status updates
 - Module 2+ uses stateless completions - store and send chat history yourself
 - Ingestion is manual file upload only - no connectors or automated pipelines
+- **MANDATORY:** Always run the validation suite located at `.agent/tests/integration-suite.md` using a browser subagent when verifying changes to ensure no regressions occur.
+- **MANDATORY:** If you implement a new feature, you must update `.agent/tests/integration-suite.md` to include a new test validating your specific feature implementation.
 
 ## Planning
 - Save all plans to `.agent/plans/` folder
@@ -39,33 +41,6 @@ RAG app with chat (default) and document ingestion interfaces. Config via env va
 ## Progress
 Check PROGRESS.md for current module status. Update it as you complete tasks.
 
-### Service Scripts
-All scripts are in the `scripts/` folder. Run with: `powershell -File scripts/<script>.ps1`
-
-| Script | Description |
-|--------|-------------|
-| `start-all.ps1` | Start both backend and frontend in new windows |
-| `start-backend.ps1` | Start backend only (http://localhost:8000) |
-| `start-frontend.ps1` | Start frontend only (http://localhost:5173) |
-| `stop-all.ps1` | Stop both services |
-| `stop-backend.ps1` | Stop backend only |
-| `stop-frontend.ps1` | Stop frontend only |
-| `restart-all.ps1` | Restart both services |
-| `restart-backend.ps1` | Restart backend only |
-| `restart-frontend.ps1` | Restart frontend only |
-
-### Quick Commands
-```powershell
-# Start all services
-powershell -File scripts/start-all.ps1
-
-# Restart backend (after code changes)
-powershell -File scripts/restart-backend.ps1
-
-# Stop everything
-powershell -File scripts/stop-all.ps1
-```
-
 ### Verify Services
 - Backend health: `curl http://localhost:8000/health` should return `{"status":"ok"}`
 - Frontend: Open http://localhost:5173 in browser
@@ -74,11 +49,16 @@ powershell -File scripts/stop-all.ps1
 For browser testing and validation:
 - **Email:** test@agenticrag.com
 - **Password:** testpassword123
+For OpenRouter API Key:
+- **OpenRouter API Key:** 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
+- **openrouter model:** z-ai/glm-4.5-air:free
 
 ## Testing Process
 Never create a new user for testing purposes. Always use the test user credentials above.
-- when entering credentials in the browser fist select "Login" not "Sign Up"
-- before entering credentials clear the credential fields to ensure the correct credentials are used
+- When entering credentials in the browser, first select "Login", not "Sign Up".
+- Before entering credentials, clear the credential fields to ensure the correct credentials are used.
+- Your primary testing mechanism should be the integration suite. After making significant code changes, **you MUST run `browser_subagent` following the instructions laid out in `.agent/tests/integration-suite.md`**.
+- When you create new features (guided by documents in `.agent/plans/`), you must append a new test case to `.agent/tests/integration-suite.md` with explicit instructions and strictly defined Acceptance Criteria.
 
 ## Progress
 Check PROGRESS.md for current module status. Update it as you complete tasks.

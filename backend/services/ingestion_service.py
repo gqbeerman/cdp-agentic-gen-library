@@ -18,7 +18,7 @@ supabase_url = os.environ.get("SUPABASE_URL")
 supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") # Important: Use service role key for background tasks
 supabase: Client = create_client(supabase_url, supabase_key)
 
-def process_document(document_id: str, user_id: str, storage_path: str, file_type: str):
+def process_document(document_id: str, user_id: str, storage_path: str, file_type: str, embedding_model: str | None = None, openrouter_api_key: str | None = None, provider_keys: dict[str, str] | None = None):
     """
     Background task to download a document, parse text, chunk it, embed it,
     and store it in the pgvector database.
@@ -56,7 +56,12 @@ def process_document(document_id: str, user_id: str, storage_path: str, file_typ
         # 5. Generate embeddings
         # The embedding service expects a list of strings and returns a list of float arrays
         chunks = [doc.page_content for doc in chunked_docs]
-        embeddings = embeddings_service.get_embeddings(chunks)
+        embeddings = embeddings_service.get_embeddings(
+            chunks, 
+            model=embedding_model, 
+            openrouter_api_key=openrouter_api_key,
+            provider_keys=provider_keys
+        )
         
         # 6. Store in pgvector
         chunk_records = []

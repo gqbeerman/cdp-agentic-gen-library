@@ -1,6 +1,9 @@
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
+import { Settings } from 'lucide-react'
+import { useState } from 'react'
+import { SettingsModal } from './SettingsModal'
 
 export interface Thread {
     id: string
@@ -24,6 +27,8 @@ export default function ThreadSidebar({
     onNewThread,
     onDeleteThread,
 }: ThreadSidebarProps) {
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+
     return (
         <div className="flex h-full w-64 flex-col border-r bg-muted/30">
             <div className="p-4">
@@ -89,6 +94,23 @@ export default function ThreadSidebar({
                     )}
                 </div>
             </ScrollArea>
+
+            <Separator />
+            <div className="p-4">
+                <Button
+                    variant="ghost"
+                    className="w-full justify-start text-muted-foreground"
+                    onClick={() => setIsSettingsOpen(true)}
+                >
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                </Button>
+            </div>
+
+            <SettingsModal
+                isOpen={isSettingsOpen}
+                onClose={() => setIsSettingsOpen(false)}
+            />
         </div>
     )
 }

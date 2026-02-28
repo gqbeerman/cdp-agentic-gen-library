@@ -7,7 +7,7 @@ import FileUploadZone from '@/components/FileUploadZone'
 import { useDocumentStatus } from '@/contexts/DocumentStatusProvider'
 
 export default function IngestionPage() {
-    const { documents, isLoading, error: statusError, refreshDocuments } = useDocumentStatus()
+    const { documents, isLoading, error: statusError } = useDocumentStatus()
     const [localError, setLocalError] = useState<string | null>(null)
 
     const error = statusError || localError
@@ -62,8 +62,7 @@ export default function IngestionPage() {
                 <FileUploadZone
                     onUploadStart={() => setLocalError(null)}
                     onUploadSuccess={() => {
-                        // Pass true for background processing to avoid unmounting the table
-                        refreshDocuments(true)
+                        // Realtime subscription handles list updates
                     }}
                     onUploadError={(err) => setLocalError(err)}
                 />

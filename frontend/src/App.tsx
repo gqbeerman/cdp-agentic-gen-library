@@ -7,6 +7,7 @@ import IngestionPage from '@/pages/IngestionPage'
 import { Toaster } from '@/components/ui/sonner'
 import { DocumentStatusProvider, useDocumentStatus } from '@/contexts/DocumentStatusProvider'
 import './App.css'
+import { SettingsProvider } from '@/contexts/SettingsContext'
 
 function AppContent() {
   const { user, loading } = useAuth()
@@ -83,8 +84,10 @@ function App() {
   return (
     <AuthProvider>
       <DocumentStatusProvider>
-        <AppContent />
-        <Toaster position="top-right" richColors />
+        <SettingsProvider>
+          <AppContent />
+          <Toaster position="top-right" richColors />
+        </SettingsProvider>
       </DocumentStatusProvider>
     </AuthProvider>
   )

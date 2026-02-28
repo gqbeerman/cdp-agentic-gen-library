@@ -9,7 +9,7 @@ from sse_starlette.sse import EventSourceResponse
 from supabase import create_client, Client
 
 from middleware.auth import get_user_id
-from services.completions_service import chat_stream, generate_title, SYSTEM_PROMPT
+from services.completions_service import chat_stream, generate_title, get_system_prompt
 from services.message_service import save_message, build_completion_messages
 from services.provider_config import get_provider_config
 
@@ -31,6 +31,10 @@ def _get_supabase() -> Client:
 class ChatRequest(BaseModel):
     thread_id: str
     message: str
+    model: str | None = None
+    embedding_model: str | None = None
+    openrouter_api_key: str | None = None
+    provider_keys: dict[str, str] = {}
 
 
 @router.post("/chat")
@@ -61,30 +65,47 @@ async def chat(request: Request, body: ChatRequest):
     )
 
     # Build the full messages array (system + history)
-    messages = build_completion_messages(body.thread_id, SYSTEM_PROMPT)
+    actual_model = body.model or config["model"]
+    system_prompt = get_system_prompt(actual_model)
+    messages = build_completion_messages(body.thread_id, system_prompt)
 
     async def event_generator():
         full_response = ""
         try:
-            async for chunk in chat_stream(messages, user_id=user_id, thread_id=body.thread_id):
+            async for chunk in chat_stream(
+                messages, 
+                user_id=user_id, 
+                thread_id=body.thread_id,
+                model=body.model,
+                embedding_model=body.embedding_model,
+                openrouter_api_key=body.openrouter_api_key,
+                provider_keys=body.provider_keys
+            ):
                 full_response += chunk
                 yield {
                     "data": json.dumps({"content": chunk}),
                 }
             yield {"data": "[DONE]"}
 
+            # Determine the actual provider used
+            actual_provider = "openrouter" if (body.openrouter_api_key and "/" in (body.model or "")) else config["provider"]
+
             # Save the assistant response to our database
             save_message(
                 thread_id=body.thread_id,
                 role="assistant",
                 content=full_response,
-                model=config["model"],
-                provider=config["provider"],
+                model=body.model or config["model"],
+                provider=actual_provider,
             )
 
             # Auto-generate title on the first message
             if current_title == "New Chat":
-                new_title = generate_title(body.message)
+                new_title = generate_title(
+                    body.message, 
+                    openrouter_api_key=body.openrouter_api_key,
+                    provider_keys=body.provider_keys
+                )
                 _get_supabase().table("user_threads").update(
                     {"title": new_title}
                 ).eq("id", body.thread_id).eq("user_id", user_id).execute()

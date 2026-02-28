@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { UploadCloud, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { useSettings } from '@/contexts/SettingsContext'
 
 interface FileUploadZoneProps {
     onUploadStart: () => void
@@ -20,19 +21,27 @@ const MAX_SIZE = 50 * 1024 * 1024 // 50MB
 export default function FileUploadZone({ onUploadStart, onUploadSuccess, onUploadError }: FileUploadZoneProps) {
     const [isDragging, setIsDragging] = useState(false)
     const [isUploading, setIsUploading] = useState(false)
+    const uploadingRef = useRef(false)
+    const {
+        embeddingModel,
+        openRouterKey, openaiKey, googleKey, xaiKey
+    } = useSettings()
 
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault()
+        e.stopPropagation()
         setIsDragging(true)
     }
 
     const handleDragLeave = (e: React.DragEvent) => {
         e.preventDefault()
+        e.stopPropagation()
         setIsDragging(false)
     }
 
     const handleDrop = async (e: React.DragEvent) => {
         e.preventDefault()
+        e.stopPropagation()
         setIsDragging(false)
         const files = Array.from(e.dataTransfer.files)
         await handleFiles(files)
@@ -48,6 +57,7 @@ export default function FileUploadZone({ onUploadStart, onUploadSuccess, onUploa
 
     const handleFiles = async (files: globalThis.File[]) => {
         if (files.length === 0) return
+        if (uploadingRef.current) return
 
         // Take the first file for now (simple one-at-a-time upload)
         const file = files[0]
@@ -67,6 +77,7 @@ export default function FileUploadZone({ onUploadStart, onUploadSuccess, onUploa
         }
 
         setIsUploading(true)
+        uploadingRef.current = true
         onUploadStart()
 
         try {
@@ -75,6 +86,14 @@ export default function FileUploadZone({ onUploadStart, onUploadSuccess, onUploa
 
             const formData = new FormData()
             formData.append('file', file)
+            formData.append('embedding_model', embeddingModel)
+            formData.append('openrouter_api_key', openRouterKey)
+            formData.append('provider_keys', JSON.stringify({
+                openai: openaiKey,
+                google: googleKey,
+                xai: xaiKey,
+                openrouter: openRouterKey
+            }))
 
             const response = await fetch('http://localhost:8000/api/documents/upload', {
                 method: 'POST',
@@ -94,6 +113,7 @@ export default function FileUploadZone({ onUploadStart, onUploadSuccess, onUploa
             onUploadError(err.message)
         } finally {
             setIsUploading(false)
+            uploadingRef.current = false
         }
     }
 

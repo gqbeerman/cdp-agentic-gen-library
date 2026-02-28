@@ -34,3 +34,8 @@ Track your progress through the masterclass. Update this file as you complete mo
 - [x] Document chunking + embeddings + pgvector
 - [x] Retrieval tool + tool calling
 - [x] Realtime ingestion status
+- [x] Multi-provider API key management (OpenAI, Google, xAI, OpenRouter UI)
+- [x] Settings UX refactor (fixed width, scrollable, Save/Cancel buttons)
+- [x] Atomic settings persistence (only save to storage on explicit action)
+- [x] Model-aware system prompt (assistant knows which model it is using)
+- [x] Document ingestion reliability (re-entrancy guards + event stop propagation)

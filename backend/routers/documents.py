@@ -53,11 +53,17 @@ async def list_documents(request: Request):
     return result.data
 
 
+ 
+
+
 @router.post("/upload")
 async def upload_document(
     request: Request,
     background_tasks: BackgroundTasks,
-    file: UploadFile = File(...)
+    file: UploadFile = File(...),
+    embedding_model: str | None = None,
+    openrouter_api_key: str | None = None,
+    provider_keys: str | None = None
 ):
     """Upload a document to Supabase Storage and track it."""
     user_id = get_user_id(request)
@@ -110,13 +116,24 @@ async def upload_document(
         .execute()
     )
 
+    provider_keys_dict = {}
+    if provider_keys:
+        import json
+        try:
+            provider_keys_dict = json.loads(provider_keys)
+        except Exception:
+            pass
+
     # Kick off background processing
     background_tasks.add_task(
         ingestion_service.process_document,
         document_id=doc_id,
         user_id=user_id,
         storage_path=storage_path,
-        file_type=file.content_type
+        file_type=file.content_type,
+        embedding_model=embedding_model,
+        openrouter_api_key=openrouter_api_key,
+        provider_keys=provider_keys_dict
     )
 
     return result.data[0] if result.data else {}
