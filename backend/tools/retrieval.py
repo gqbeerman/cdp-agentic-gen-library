@@ -45,13 +45,14 @@ async def search_knowledge_base(query: str, user_id: str, limit: int = 5, embedd
             content = match.get("content", "").strip()
             similarity = match.get("similarity", 0)
             metadata = match.get("metadata", {})
+            filename = match.get("filename", "Unknown Document")
             
-            # Extract page number or default to chunk index
+            # Extract page number or default to section
             page_num = metadata.get("page")
             if page_num is not None:
-                source_info = f"[Page {page_num} | Chunk {i+1} | Sim: {similarity:.2f}]"
+                source_info = f"[{filename}, Page {page_num}]"
             else:
-                source_info = f"[Section {i+1} | Sim: {similarity:.2f}]"
+                source_info = f"[{filename}, Section {i+1}]"
             
             formatted_chunks.append(f"{source_info}\n{content}")
             
@@ -67,7 +68,7 @@ retrieval_tool_schema = {
     "type": "function",
     "function": {
         "name": "search_knowledge_base",
-        "description": "Searches the user's uploaded documents for relevant information. Call this tool when the user asks a question that requires specific knowledge or facts that might be in their files.",
+        "description": "Searches the user's uploaded documents for relevant information. You MUST call this tool for EVERY user question before responding. Always search first, then answer based on the results.",
         "parameters": SearchKnowledgeBaseArgs.model_json_schema()
     }
 }

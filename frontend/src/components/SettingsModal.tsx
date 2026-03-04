@@ -123,11 +123,11 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                                     <SelectValue placeholder="Select a chat model" />
                                 </SelectTrigger>
                                 <SelectContent className="max-h-[300px]">
-                                    <SelectItem value="gpt-4o">GPT-4o</SelectItem>
-                                    <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
-                                    <SelectItem value="claude-3-opus-20240229">Claude 3 Opus</SelectItem>
-                                    <SelectItem value="claude-3-5-sonnet-20240620">Claude 3.5 Sonnet</SelectItem>
-                                    <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro</SelectItem>
+                                    <SelectItem value="openai/gpt-4o">GPT-4o (OpenAI)</SelectItem>
+                                    <SelectItem value="openai/gpt-4-turbo">GPT-4 Turbo (OpenAI)</SelectItem>
+                                    <SelectItem value="anthropic/claude-3-opus-20240229">Claude 3 Opus</SelectItem>
+                                    <SelectItem value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet</SelectItem>
+                                    <SelectItem value="google/gemini-2.0-flash-001">Gemini 2.0 Flash</SelectItem>
                                     {localCustomModels.map((model) => (
                                         <SelectItem key={model} value={model}>
                                             {model} (Custom)
@@ -150,8 +150,9 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                                     <SelectValue placeholder="Select an embedding model" />
                                 </SelectTrigger>
                                 <SelectContent className="max-h-[300px]">
-                                    <SelectItem value="text-embedding-3-small">text-embedding-3-small</SelectItem>
-                                    <SelectItem value="text-embedding-3-large">text-embedding-3-large</SelectItem>
+                                    <SelectItem value="text-embedding-3-small">text-embedding-3-small (OpenAI)</SelectItem>
+                                    <SelectItem value="text-embedding-3-large">text-embedding-3-large (OpenAI)</SelectItem>
+                                    <SelectItem value="qwen/qwen3-embedding-8b">qwen3-embedding-8b (OpenRouter)</SelectItem>
                                 </SelectContent>
                             </Select>
                             <p className="text-[0.8rem] text-muted-foreground">

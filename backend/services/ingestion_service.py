@@ -109,11 +109,56 @@ def _extract_text(file_bytes: bytes, file_type: str) -> List[Dict[str, Any]]:
     documents = []
     
     if file_type == "application/pdf":
-        reader = pypdf.PdfReader(file_io)
-        for i, page in enumerate(reader.pages):
-            text = page.extract_text()
-            if text and text.strip():
-                documents.append({"text": text, "metadata": {"page": i + 1}})
+        # Try PyMuPDF first (handles scanned/image-based PDFs better)
+        try:
+            import pymupdf
+            doc = pymupdf.open(stream=file_bytes, filetype="pdf")
+            for i, page in enumerate(doc):
+                text = page.get_text("text")
+                if text and text.strip():
+                    documents.append({"text": text, "metadata": {"page": i + 1}})
+            
+            # OCR fallback: if no text was extracted, the PDF is image-based
+            if not documents:
+                print(f"[Ingestion] No embedded text found, attempting OCR on {len(doc)} pages...")
+                try:
+                    import pytesseract
+                    from PIL import Image
+                    
+                    for i, page in enumerate(doc):
+                        # Render page to a high-res image (300 DPI)
+                        mat = pymupdf.Matrix(300 / 72, 300 / 72)
+                        pix = page.get_pixmap(matrix=mat)
+                        img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+                        
+                        # Run OCR
+                        text = pytesseract.image_to_string(img)
+                        if text and text.strip():
+                            documents.append({"text": text, "metadata": {"page": i + 1}})
+                    
+                    if documents:
+                        print(f"[Ingestion] OCR extracted text from {len(documents)} pages")
+                    else:
+                        print("[Ingestion] OCR also yielded no text")
+                except ImportError as ie:
+                    print(f"[Ingestion] OCR dependencies not available: {ie}")
+                except Exception as ocr_err:
+                    print(f"[Ingestion] OCR failed: {ocr_err}")
+            
+            doc.close()
+        except ImportError:
+            print("[Ingestion] PyMuPDF not available, using pypdf only")
+        except Exception as e:
+            print(f"[Ingestion] PyMuPDF failed, falling back to pypdf: {e}")
+        
+        # Final fallback to pypdf if nothing else worked
+        if not documents:
+            file_io.seek(0)
+            reader = pypdf.PdfReader(file_io)
+            for i, page in enumerate(reader.pages):
+                text = page.extract_text()
+                if text and text.strip():
+                    documents.append({"text": text, "metadata": {"page": i + 1}})
                 
     elif "wordprocessingml.document" in file_type: # DOCX
         doc = docx.Document(file_io)

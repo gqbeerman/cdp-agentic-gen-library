@@ -5,6 +5,7 @@ OpenAI, OpenRouter, Ollama, LM Studio, etc.
 """
 
 import logging
+import os
 from typing import AsyncGenerator
 
 from openai import OpenAI
@@ -53,7 +54,7 @@ def _get_routed_client(model: str, provider_keys: dict[str, str] | None = None, 
             return OpenAI(api_key=provider_keys["openai"]), "openai"
             
     # 2. OpenRouter Fallback
-    or_key = (openrouter_api_key or (provider_keys.get("openrouter") if provider_keys else None))
+    or_key = (openrouter_api_key or (provider_keys.get("openrouter") if provider_keys else None) or os.getenv("OPENROUTER_API_KEY"))
     if or_key:
         or_key = or_key.strip()
 
@@ -78,7 +79,14 @@ def get_system_prompt(model_name: str) -> str:
         "You are a helpful research assistant for the Agentic RAG Library. "
         f"You are currently running on the model: {model_name}. "
         "Answer questions clearly and concisely. "
-        "When referencing information from the retrieved documents, you MUST cite your sources using the exact labels provided in the context blocks (e.g. '[Page 4]', '[Section 2]'). Do not use generic numbers or abstract chunk references."
+        "\n\nIMPORTANT INSTRUCTIONS:\n"
+        "1. You MUST ALWAYS use the search_knowledge_base tool to search the user's uploaded documents "
+        "BEFORE answering any question. Do not answer from your own knowledge without first checking the knowledge base. "
+        "Even if you think you know the answer, search the knowledge base first to provide the most relevant and accurate response.\n"
+        "2. When referencing information from the retrieved documents, you MUST cite your sources using the exact format: "
+        "'[doc name, page number(s)]' (e.g. '[Annual_Report.pdf, Page 4]'). Do not use generic numbers or abstract chunk references.\n"
+        "3. If the knowledge base has no relevant results, then and only then should you answer from your general knowledge, "
+        "clearly stating that the answer is not from the uploaded documents."
     )
 
 
@@ -103,6 +111,8 @@ async def chat_stream(
     actual_model = model or config["model"]
     client, provider_name = _get_routed_client(actual_model, provider_keys, openrouter_api_key)
 
+    print(f"[Chat] model={actual_model}, provider={provider_name}")
+    
     tools = [retrieval_tool_schema]
 
     try:
@@ -222,13 +232,22 @@ async def chat_stream(
 
 def generate_title(user_message: str, openrouter_api_key: str | None = None, provider_keys: dict[str, str] | None = None) -> str:
     """Generate a short title for a thread based on the first user message."""
+    import os
     config = _get_config()
+    
+    # Resolve OpenRouter key: param → provider_keys → env var
+    or_key = openrouter_api_key \
+        or (provider_keys.get("openrouter") if provider_keys else None) \
+        or os.getenv("OPENROUTER_API_KEY")
+    if or_key:
+        or_key = or_key.strip() if or_key.strip() else None
+    
     try:
         title_model = config["title_model"]
-        client, provider_name = _get_routed_client(title_model, provider_keys, openrouter_api_key)
+        client, provider_name = _get_routed_client(title_model, provider_keys, or_key)
         
         response = client.chat.completions.create(
-            model=config["title_model"],
+            model=title_model,
             messages=[
                 {
                     "role": "system",
@@ -245,5 +264,33 @@ def generate_title(user_message: str, openrouter_api_key: str | None = None, pro
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
-        logger.warning(f"Failed to generate title: {e}")
+        # If the primary model fails (e.g. 429 from OpenAI), try OpenRouter
+        if or_key:
+            try:
+                logger.info(f"Primary title model failed, retrying via OpenRouter")
+                or_client = OpenAI(
+                    base_url="https://openrouter.ai/api/v1",
+                    api_key=or_key,
+                )
+                response = or_client.chat.completions.create(
+                    model="openai/gpt-4o-mini",
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": (
+                                "Generate a very short title (3-6 words) that summarizes "
+                                "the user's message. Do not use quotes or punctuation. "
+                                "Just return the title text."
+                            ),
+                        },
+                        {"role": "user", "content": user_message},
+                    ],
+                    max_tokens=20,
+                    temperature=0.5,
+                )
+                return response.choices[0].message.content.strip()
+            except Exception as e2:
+                logger.warning(f"OpenRouter title generation also failed: {e2}")
+        else:
+            logger.warning(f"Failed to generate title: {e}")
         return "New Chat"

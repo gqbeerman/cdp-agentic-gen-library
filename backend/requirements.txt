@@ -11,5 +11,8 @@ python-multipart
 langchain-text-splitters
 langchain-openai
 pypdf
+pymupdf
+pytesseract
+Pillow
 python-docx
 beautifulsoup4

@@ -11,14 +11,31 @@ interface SettingsContextType {
     updateSettings: (settings: Partial<Omit<SettingsContextType, 'updateSettings'>>) => void
 }
 
-const DEFAULT_LLM_MODEL = 'gpt-4o'
-const DEFAULT_EMBEDDING_MODEL = 'text-embedding-3-small'
+const DEFAULT_LLM_MODEL = 'openai/gpt-4o'
+const DEFAULT_EMBEDDING_MODEL = 'qwen/qwen3-embedding-8b'
+
+// Migrate old unprefixed model names to OpenRouter-compatible names
+const MODEL_MIGRATION: Record<string, string> = {
+    'gpt-4o': 'openai/gpt-4o',
+    'gpt-4-turbo': 'openai/gpt-4-turbo',
+    'claude-3-opus-20240229': 'anthropic/claude-3-opus-20240229',
+    'claude-3-5-sonnet-20240620': 'anthropic/claude-3.5-sonnet',
+    'gemini-1.5-pro': 'google/gemini-2.0-flash-001',
+}
+
+function migrateModel(stored: string | null, defaultModel: string): string {
+    if (!stored) return defaultModel
+    return MODEL_MIGRATION[stored] || stored
+}
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined)
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
     const [llmModel, setLlmModel] = useState<string>(() => {
-        return localStorage.getItem('llm_model') || DEFAULT_LLM_MODEL
+        const stored = localStorage.getItem('llm_model')
+        const migrated = migrateModel(stored, DEFAULT_LLM_MODEL)
+        if (stored && migrated !== stored) localStorage.setItem('llm_model', migrated)
+        return migrated
     })
 
     const [embeddingModel, setEmbeddingModel] = useState<string>(() => {
